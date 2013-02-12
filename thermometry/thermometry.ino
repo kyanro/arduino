@@ -27,17 +27,21 @@
  
  */
 
+#define SOURCE_VOLT 5.0
+
 int sensorPin = A0;    // select the input pin for the potentiometer
 int ledPin = 13;      // select the pin for the LED
 int sensorValue = 0;  // variable to store the value coming from the sensor
-#define SOURCE_VOLT 5.0
-#define TEMPERATURE_RANGE 186.0
 
 float getTemp(float Vi){
-  float 0.015168
+  float temperature = 0;
   //説明書にのってた式
-    Serial.println(Vi);
-  return (Vi - 1.8528)/(-11.79 / 1000);
+  temperature = -1481.96
+               + sqrt(
+                   2.1962 * pow(10, 6)
+                 + (1.8639 - Vi) / (3.88 * pow(10, -6))
+                 );
+  return temperature;
 }
 
 float getVi(int sensorValue, float Vmax){
@@ -51,22 +55,26 @@ void setup() {
 }
 
 void loop() {
-  float Vi = 0;
-  // read the value from the sensor:
-  sensorValue = analogRead(sensorPin);
-
-  //温度センサからの入力電圧取得
-  Vi = getVi(sensorValue, SOURCE_VOLT);
+  //あんまり急に温度変化しないように直近1000回の平均を出力とする
+  float sumTemp = 0.0;
+  int sumCount = 1000;
+  int i = 0;
   
-  //温度出力
-  Serial.println(getTemp(Vi));
-  delay(1000);
-  // turn the ledPin on
+  float Vi = 0.0;
+
   digitalWrite(ledPin, HIGH);  
-  // stop the program for <sensorValue> milliseconds:
-//  delay(sensorValue);          
-  // turn the ledPin off:        
-//  digitalWrite(ledPin, LOW);   
-  // stop the program for for <sensorValue> milliseconds:
-//  delay(sensorValue);                  
+
+  for(i = 0; i < sumCount; i++){
+    // read the value from the sensor:
+    sensorValue = analogRead(sensorPin);
+   
+    //温度センサからの入力電圧取得(温度センサの出力電圧)
+    Vi = getVi(sensorValue, SOURCE_VOLT);
+ 
+    sumTemp += getTemp(Vi);
+
+    //温度出力
+    delay(1);
+  }
+  Serial.println(sumTemp / sumCount);
 }
